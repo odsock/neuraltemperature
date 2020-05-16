@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Util {
   public static double getRandomTemperature() {
-    return new Random().nextDouble() * Constants.TEMPERATURE_RANGE + Constants.MINIMUM_TEMPERATURE;
+    return new Random().nextDouble() * Constants.TEMP_RANGE + Constants.MIN_TEMP;
   }
 
   public static String getWaterState(double randomTemperature) {
