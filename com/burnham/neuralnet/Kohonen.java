@@ -18,257 +18,161 @@ package com.burnham.neuralnet;
 */
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class Kohonen
-{
-	MyNode[] input = new MyNode[20];
-	MyNode[][] map = new MyNode[10][10];
-	int currenttrain = -1;
-	double learningfactor = .2;
+public class Kohonen {
+  private double temperature;
+  private Node[][] map = new Node[10][10];
 
-	public static void main(String args[])
-	{
-		Kohonen k = new Kohonen();
+  int currenttrain = -1;
 
-		for(int i = 0; i < 1000; i++)
-		{
-			k.loadNextTrain();
-			MyNode bestfit = k.findBestFit();
-			System.out.println("train " + k.currenttrain + " bestfit " + bestfit.x + "," + bestfit.y + " fitness " + bestfit.lastfitness);
-			bestfit.label = k.currenttrain;
-			k.improveFitness(bestfit);
-		}
+  public static void main(String args[]) {
+    Kohonen net = new Kohonen();
 
-		System.out.println();
-		System.out.println("current labels");
-		for(int i = 0; i < 10; i++)
-		{
-			for(int j = 0; j < 10; j++)
-				System.out.print(String.format("%3d", k.map[i][j].label));
-			System.out.println();
-		}
-		System.out.println();
+    for (int i = 0; i < 1000; i++) {
+      double randomTemperature = Util.getRandomTemperature();
+      Node bestfit = net.findBestFit(randomTemperature);
+      System.out.println("train " + net.currenttrain + " bestfit " + bestfit.getX() + "," + bestfit.getY() + " fitness "
+          + bestfit.getFitness(randomTemperature));
+      bestfit.setLabel(Util.getWaterState(randomTemperature));
+      net.improveFitness(bestfit);
+    }
 
-		System.out.println("done with training data.");
+    System.out.println();
+    System.out.println("current labels");
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 10; j++)
+        System.out.print(String.format("%3d", net.map[i][j].getLabel()));
+      System.out.println();
+    }
+    System.out.println();
 
-		while(true)
-		{
-			System.out.println("\nenter 4x5 bit pattern.");
-			String temp = getUserPattern();
-			k.setInputValues(temp);
-			MyNode bestfit = k.findBestFit();
-			System.out.println("bestfit " + bestfit.x + "," + bestfit.y + " label: " + bestfit.label);
-		}
-	}
+    System.out.println("done with training data.");
 
-	static String getUserPattern()
-	{
-		String pattern = "";
-		try
-		{
-			InputStreamReader isr = new InputStreamReader(System.in);
-			BufferedReader br = new BufferedReader(isr);
-			for(int i = 0; i < 5; i++)
-				pattern += br.readLine();
-		}
-		catch(IOException e)
-		{
-			System.out.println(e);
-			System.exit(0);
-		}
+    while (true) {
+      System.out.println("\nenter temperature.");
+      double temperatureInput = getUserInput();
+      Node bestfit = net.findBestFit(temperatureInput);
+      System.out.println("bestfit " + bestfit.getX() + "," + bestfit.getY() + " label: " + bestfit.getLabel());
+    }
+  }
 
-		return pattern;
-	}
+  static double getUserInput() {
+    String input = "";
+    try {
+      InputStreamReader isr = new InputStreamReader(System.in);
+      BufferedReader br = new BufferedReader(isr);
+      input = br.readLine();
+    } catch (IOException e) {
+      System.out.println(e);
+      System.exit(1);
+    }
 
-	Kohonen()
-	{
-		for(int i = 0; i < 10; i++)
-			for(int j = 0; j < 10; j++)
-				map[i][j] = new MyNode(i, j);
-	}
+    return Double.parseDouble(input);
+  }
 
-	public void setInputValues(String bitpattern)
-	{
-		for(int i = 0; i < bitpattern.length(); i++)
-			input[i] = new MyNode(Double.parseDouble(bitpattern.substring(i, i+1)));
-	}
+  public Kohonen() {
+    for (int i = 0; i < 10; i++)
+      for (int j = 0; j < 10; j++)
+        map[i][j] = new Node(i, j);
+  }
 
-	public void improveFitness(MyNode bestfit)
-	{
-		int x = bestfit.x;
-		int y = bestfit.y;
+  public void improveFitness(Node bestfit) {
+    int x = bestfit.getX();
+    int y = bestfit.getY();
 
-		MyNode n;
+    Node n;
 
-		if(x-2 >= 0)
-		{
-			n = map[x-2][y];
-			for(int i = 0; i < 20; i++)
-				n.weight[i] += (input[i].value - n.weight[i]) * learningfactor;
-		}
-		for(int j = y - 1; j < y + 1; j++)
-			if(j >= 0 && j < 10 && x-1 >= 0)
-			{
-				n = map[x-1][j];
-				for(int i = 0; i < 20; i++)
-					n.weight[i] += (input[i].value - n.weight[i]) * learningfactor;
-			}
-		for(int j = y - 2; j < y + 2; j++)
-			if(j >= 0 && j < 10)
-			{
-				n = map[x][j];
-				for(int i = 0; i < 20; i++)
-					n.weight[i] += (input[i].value - n.weight[i]) * learningfactor;
-			}
-		for(int j = y - 1; j < y + 1; j++)
-			if(j >= 0 && j < 10 && x+1 < 10)
-			{
-				n = map[x+1][j];
-				for(int i = 0; i < 20; i++)
-					n.weight[i] += (input[i].value - n.weight[i]) * learningfactor;
-			}
-		if(x+2 < 10)
-		{
-			n = map[x+2][y];
-			for(int i = 0; i < 20; i++)
-				n.weight[i] += (input[i].value - n.weight[i]) * learningfactor;
-		}
-	}
+    if (x - 2 >= 0) {
+      n = map[x - 2][y];
+      n.setWeight((temperature - n.getWeight()) * Constants.LEARNING_FACTOR);
+    }
+    for (int j = y - 1; j < y + 1; j++)
+      if (j >= 0 && j < 10 && x - 1 >= 0) {
+        n = map[x - 1][j];
+        n.setWeight((temperature - n.getWeight()) * Constants.LEARNING_FACTOR);
+      }
+    for (int j = y - 2; j < y + 2; j++)
+      if (j >= 0 && j < 10) {
+        n = map[x][j];
+        n.setWeight((temperature - n.getWeight()) * Constants.LEARNING_FACTOR);
+      }
+    for (int j = y - 1; j < y + 1; j++)
+      if (j >= 0 && j < 10 && x + 1 < 10) {
+        n = map[x + 1][j];
+        for (int i = 0; i < 20; i++)
+          n.setWeight((temperature - n.getWeight()) * Constants.LEARNING_FACTOR);
+      }
+    if (x + 2 < 10) {
+      n = map[x + 2][y];
+      n.setWeight((temperature - n.getWeight()) * Constants.LEARNING_FACTOR);
+    }
+  }
 
-	public MyNode findBestFit()
-	{
-		double[][] fitnessmap = new double[10][10];
-		MyNode bestfit = null;
-		double bestsofar = 100000;
+  public Node findBestFit(double temperatureInput) {
+    Node bestfit = null;
+    double bestsofar = 100000;
 
-		for(int i = 0; i < 10; i++)
-			for(int j = 0; j < 10; j++)
-			{
-				for(int k = 0; k < 20; k++)
-				{
-					fitnessmap[i][j] += Math.pow(map[i][j].weight[k] - input[k].value, 2);
-					map[i][j].lastfitness = fitnessmap[i][j];
-				}
-				if(fitnessmap[i][j] < bestsofar)
-				{
-					bestsofar = fitnessmap[i][j];
-					bestfit = map[i][j];
-				}
-			}
+    for (int i = 0; i < 10; i++)
+      for (int j = 0; j < 10; j++) {
+        double fitness = map[i][j].getFitness(temperatureInput);
+        if (fitness < bestsofar) {
+          bestsofar = fitness;
+          bestfit = map[i][j];
+        }
+      }
 
-		return bestfit;
-	}
+    return bestfit;
+  }
 
-	public MyNode fitUserPattern()
-	{
-		double[][] fitnessmap = new double[10][10];
-		MyNode bestfit = null;
-		double bestsofar = 100000;
+  // public Node fitUserPattern() {
+  //   Node bestfit = findBestFit(temperatureInput);
 
-		for(int i = 0; i < 10; i++)
-			for(int j = 0; j < 10; j++)
-			{
-				for(int k = 0; k < 20; k++)
-				{
-					fitnessmap[i][j] += Math.pow(map[i][j].weight[k] - input[k].value, 2);
-					map[i][j].lastfitness = fitnessmap[i][j];
-				}
-				if(fitnessmap[i][j] < bestsofar)
-				{
-					bestsofar = fitnessmap[i][j];
-					bestfit = map[i][j];
-				}
-			}
+  //   if (bestfit.getLabel() == null) {
+  //     int[] labels = new int[10];
+  //     int i = bestfit.getX();
+  //     int j = bestfit.getY();
 
-		if(bestfit.label == -1)
-		{
-			int[] labels = new int[10];
-			int i = bestfit.x;
-			int j = bestfit.y;
+  //     System.out.println("no label: " + i + "," + j);
 
-			System.out.println("no label: " + i + "," + j);
+  //     int offset = 1;
+  //     i -= offset;
+  //     j -= offset;
+  //     while (true) {
+  //       if (i < 10 && i >= 0 && j < 10 && j >= 0 && map[i][j].getLabel() != -1)
+  //         labels[map[i][j].getLabel()]++;
 
-			int offset = 1;
-			i -= offset;
-			j -= offset;
-			while(true)
-			{
-				if(i < 10 && i >= 0 && j < 10 && j >= 0 && map[i][j].label != -1)
-					labels[map[i][j].label]++;
+  //       if (i == bestfit.getX() - 1 - offset && j == bestfit.getY() - offset) {
+  //         int maxlabel = 0;
+  //         int label = -1;
+  //         for (int k = 0; k < labels.length; k++)
+  //           if (labels[k] > maxlabel) {
+  //             maxlabel = labels[k];
+  //             label = k;
+  //           }
+  //         if (label == -1) {
+  //           offset++;
+  //           if (offset == 10)
+  //             break;
+  //           j++;
+  //         } else {
+  //           bestfit.setLabel(label);
+  //           break;
+  //         }
+  //       } else if (i == bestfit.getX() - offset && j < bestfit.getY() + offset)
+  //         j++;
+  //       else if (i == bestfit.getX() + offset && j > bestfit.getY() - offset)
+  //         j--;
+  //       else if (j == bestfit.getY() - offset && i > bestfit.getX() - offset)
+  //         i--;
+  //       else if (j == bestfit.getY() + offset && i < bestfit.getX() + offset)
+  //         i++;
 
-				if(i == bestfit.x - 1 - offset && j == bestfit.y - offset)
-				{
-					int maxlabel = 0;
-					int label = -1;
-					for(int k = 0; k < labels.length; k++)
-						if(labels[k] > maxlabel)
-						{
-							maxlabel = labels[k];
-							label = k;
-						}
-					if(label == -1)
-					{
-						offset++;
-						if(offset == 10)
-							break;
-						j++;
-					}
-					else
-					{
-						bestfit.label = label;
-						break;
-					}
-				}
-				else if(i == bestfit.x - offset && j < bestfit.y + offset)
-					j++;
-				else if(i == bestfit.x + offset && j > bestfit.y - offset)
-					j--;
-				else if(j == bestfit.y - offset && i > bestfit.x - offset)
-					i--;
-				else if(j == bestfit.y + offset && i < bestfit.x + offset)
-					i++;
+  //       System.out.println("next check: " + i + "," + j);
+  //     }
+  //   }
 
-				System.out.println("next check: " + i + "," + j);
-			}
-		}
-
-
-		return bestfit;
-	}
-
-	//read a training set
-	public void loadNextTrain()
-	{
-		currenttrain = ++currenttrain % 10;
-		String train = "";
-		try
-		{
-			File f = new File("train.txt");
-			FileReader fr = new FileReader(f);
-			BufferedReader br = new BufferedReader(fr);
-			String nextline = br.readLine();
-			while(nextline != null)
-			{
-				if(nextline.equals(String.valueOf(currenttrain)))
-				{
-					for(int i = 0; i < 5; i++)
-						train += br.readLine();
-					break;
-				}
-				nextline = br.readLine();
-			}
-		}
-		catch(IOException e)
-		{
-			System.out.println(e);
-			System.exit(0);
-		}
-
-		for(int i = 0; i < train.length(); i++)
-			input[i] = new MyNode(Double.parseDouble(train.substring(i, i+1)));
-	}
+  //   return bestfit;
+  // }
 }
