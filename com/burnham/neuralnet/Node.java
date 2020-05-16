@@ -1,8 +1,5 @@
 package com.burnham.neuralnet;
 
-import java.util.Date;
-import java.util.Random;
-
 class Node {
   private int x = -1;
   private int y = -1;
@@ -12,12 +9,12 @@ class Node {
   Node(final int x, final int y) {
     this.x = x;
     this.y = y;
-    final Random r = new Random(new Date().getTime());
-    this.setWeight(r.nextDouble() * Double.MAX_VALUE * Constants.MINIMUM_TEMPERATURE);
+    this.weight = Util.getRandomTemperature();
   }
 
   public double getFitness(double temperature) {
-    return Math.pow(weight - temperature, 2);
+    double fitness = Math.pow(weight - temperature, 2);
+    return fitness;
   }
 
   public double getWeight() {

@@ -4,13 +4,13 @@ import java.util.Random;
 
 public class Util {
   public static double getRandomTemperature() {
-    return new Random().nextDouble() * Double.MAX_VALUE - Constants.MINIMUM_TEMPERATURE;
+    return new Random().nextDouble() * Constants.TEMPERATURE_RANGE + Constants.MINIMUM_TEMPERATURE;
   }
 
   public static String getWaterState(double randomTemperature) {
-    if (randomTemperature > 212) {
+    if (randomTemperature > 100) {
       return "gas";
-    } else if (randomTemperature > 32) {
+    } else if (randomTemperature > 0) {
       return "liquid";
     } else {
       return "frozen";
