@@ -1,3 +1,5 @@
+package com.burnham.neuralnet;
+
 /*	Mike Burnham
 	CS405 - AI
 	hw5 exersize 2b
@@ -10,12 +12,16 @@
 		to get it learning faster.
 			It still often mistakes 0 for 8, and sometimes doesn't end up labeling
 		a node at all for some classes.  I think that is due to them getting replaced
-		repeatedly durning training.
+    repeatedly durning training.
+
+    Updated 05/15/2020
 */
 
-import java.util.*;
-import java.io.*;
-import java.lang.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class Kohonen
 {
@@ -264,29 +270,5 @@ public class Kohonen
 
 		for(int i = 0; i < train.length(); i++)
 			input[i] = new MyNode(Double.parseDouble(train.substring(i, i+1)));
-	}
-}
-
-class MyNode
-{
-	int x = -1;
-	int y = -1;
-	double value = -1;
-	double[] weight = new double[20];
-	double lastfitness;
-	int label = -1;
-
-	MyNode(int thex, int they)
-	{
-		x = thex;
-		y = they;
-		Random r = new Random(new Date().getTime());
-		for(int i = 0; i < weight.length; i++)
-			weight[i] = r.nextDouble();
-	}
-
-	MyNode(double thevalue)
-	{
-		value = thevalue;
 	}
 }
