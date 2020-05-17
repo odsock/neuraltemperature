@@ -3,21 +3,58 @@ package com.burnham.neuralnet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Optional;
 
 public class Kohonen {
   private Node[][] map = new Node[Constants.MAP_SIZE][Constants.MAP_SIZE];
 
   public static void main(String args[]) {
-    Kohonen net = new Kohonen();
+    evaluateAverageQuality();
+    // trainMapAndPrintAndEvaluate();
+    // Kohonen net = new Kohonen();
+    // trainMapAndPrint(net);
+    // runInteractive(net);
+  }
 
+  private static void evaluateAverageQuality() {
+    double count = 100;
+    double qualitySum = 0;
+
+    for(int i = 0; i < count; i++) {
+      Kohonen net = Kohonen.trainNet();
+      qualitySum += net.evaluateMap();
+    }
+
+    double averageQuality = qualitySum / count;
+    System.out.println("average quality: " + averageQuality);
+  }
+
+  private static Kohonen trainNet() {
+    Kohonen net = new Kohonen();
     for (int i = 0; i < Constants.TRAINING_ITERATIONS; i++) {
       net.train();
     }
-    net.print();
-    double mapQuality = net.testMapQuality();
-    System.out.format("map accuracy: %3.2f\n", mapQuality);
-    System.out.println("done with training data.");
+    return net;
+  }
 
+  private static Kohonen trainMapAndPrintAndEvaluate() {
+    Kohonen net = new Kohonen();
+    trainMapAndPrint(net);
+
+    double mapQuality = net.evaluateMap();
+    System.out.format("map accuracy: %3.2f\n", mapQuality);
+    return net;
+  }
+
+  private static void trainMapAndPrint(Kohonen net) {
+    for (int i = 0; i < Constants.TRAINING_ITERATIONS; i++) {
+      net.train();
+    }
+    System.out.println("done with training.");
+    net.print();
+  }
+
+  private static void runInteractive(Kohonen net) {
     while (true) {
       System.out.println("\nenter temperature:");
       double temperatureInput = getUserInput();
@@ -27,7 +64,7 @@ public class Kohonen {
     }
   }
 
-  static double getUserInput() {
+  private static double getUserInput() {
     String input = "";
     try {
       InputStreamReader isr = new InputStreamReader(System.in);
@@ -50,13 +87,25 @@ public class Kohonen {
   public void train() {
     double randomTemperature = Util.getRandomTemperature();
     Node bestfit = findBestFit(randomTemperature);
-    // System.out.println("train " + randomTemperature + " bestfit " + bestfit.getX() + "," + bestfit.getY() + " fitness "
-    //     + bestfit.getFitness(randomTemperature));
     bestfit.setLabel(Util.getWaterState(randomTemperature));
     adjustMapFitness(bestfit, randomTemperature);
   }
 
-  public double testMapQuality() {
+  public Node findBestFit(double temperatureInput) {
+    Node bestfit = null;
+    double bestsofar = Double.MAX_VALUE;
+    for (int i = 0; i < Constants.MAP_SIZE; i++)
+      for (int j = 0; j < Constants.MAP_SIZE; j++) {
+        double fitness = map[i][j].getFitness(temperatureInput);
+        if (fitness < bestsofar) {
+          bestsofar = fitness;
+          bestfit = map[i][j];
+        }
+      }
+    return bestfit;
+  }
+
+  public double evaluateMap() {
     double testCount = 0;
     double correctCount = 0;
     for(double temperature = Constants.MIN_TEMP; temperature <= Constants.MAX_TEMP; temperature++) {
@@ -85,76 +134,37 @@ public class Kohonen {
     System.out.println();
   }
 
-  public Node getNodeAt(int x, int y) {
+  private Optional<Node> getNodeAt(int x, int y) {
+    Node node = null;
     if (x >= 0 && x < Constants.MAP_SIZE && y >= 0 && y < Constants.MAP_SIZE) {
-      return map[x][y];
+      node = map[x][y];
     }
-    return null;
+    return Optional.ofNullable(node);
   }
 
-  public void adjustMapFitness(Node bestFit, double temperature) {
+  private void adjustMapFitness(Node bestFit, double temperature) {
     int x = bestFit.getX();
     int y = bestFit.getY();
 
     for (int distance = 0; distance <= Constants.ADJUSTMENT_DISTANCE; distance++) {
       for (int distX = -distance; distX <= distance; distX++) {
         int distY = distance - Math.abs(distX);
-        adjustNodeFitness(getNodeAt(x + distX, y + distY), temperature, 1 / Math.pow(2, distance));
+        adjustNodeFitness(x + distX, y + distY, temperature, 1 / Math.pow(2, distance));
         if (distY != 0) {
-          adjustNodeFitness(getNodeAt(x + distX, y - distY), temperature, 1 / Math.pow(2, distance));
+          adjustNodeFitness(x + distX, y - distY, temperature, 1 / Math.pow(2, distance));
         }
       }
     }
-
-    // adjustNodeFitness(getNodeAt(x + 1, y + 0), temperature, .5);
-    // adjustNodeFitness(getNodeAt(x - 1, y + 0), temperature, .5);
-    // adjustNodeFitness(getNodeAt(x + 0, y + 1), temperature, .5);
-    // adjustNodeFitness(getNodeAt(x + 0, y - 1), temperature, .5);
-
-    // adjustNodeFitness(getNodeAt(x + 2, y + 0), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x - 2, y + 0), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x + 0, y + 2), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x + 0, y - 2), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x + 1, y + 1), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x - 1, y - 1), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x + 1, y - 1), temperature, .25);
-    // adjustNodeFitness(getNodeAt(x - 1, y + 1), temperature, .25);
-
-    // adjustNodeFitness(getNodeAt(x - 3, y + 0), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x - 2, y - 1), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x - 2, y + 1), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x - 1, y - 2), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x - 1, y + 2), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 0, y - 3), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 0, y + 3), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 1, y - 2), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 1, y + 2), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 2, y - 1), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 2, y + 1), temperature, .125);
-    // adjustNodeFitness(getNodeAt(x + 3, y + 0), temperature, .125);
   }
 
-  public void adjustNodeFitness(Node node, double temperature, double learningScale) {
-    if (node == null) {
+  private void adjustNodeFitness(int x, int y, double temperature, double learningScale) {
+    Optional<Node> opNode = getNodeAt(x, y);
+    if (opNode.isEmpty()) {
       return;
     }
+    Node node = opNode.get();
     double diff = temperature - node.getWeight();
-    node.setWeight(node.getWeight() + diff * Constants.LEARNING_FACTOR);
-  }
-
-  public Node findBestFit(double temperatureInput) {
-    Node bestfit = null;
-    double bestsofar = Double.MAX_VALUE;
-
-    for (int i = 0; i < Constants.MAP_SIZE; i++)
-      for (int j = 0; j < Constants.MAP_SIZE; j++) {
-        double fitness = map[i][j].getFitness(temperatureInput);
-        if (fitness < bestsofar) {
-          bestsofar = fitness;
-          bestfit = map[i][j];
-        }
-      }
-
-    return bestfit;
+    // node.setWeight(node.getWeight() + diff * Constants.LEARNING_FACTOR);
+    node.setWeight(node.getWeight() + diff * Constants.LEARNING_FACTOR * learningScale);
   }
 }
