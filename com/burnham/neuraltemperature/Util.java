@@ -1,4 +1,4 @@
-package com.burnham.neuralnet;
+package com.burnham.neuraltemperature;
 
 import java.util.Random;
 

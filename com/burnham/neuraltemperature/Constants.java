@@ -1,4 +1,4 @@
-package com.burnham.neuralnet;
+package com.burnham.neuraltemperature;
 
 public class Constants {
   public static final double LEARNING_FACTOR = .001;

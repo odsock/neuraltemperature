@@ -1,4 +1,4 @@
-package com.burnham.neuralnet;
+package com.burnham.neuraltemperature;
 
 class Node {
   private int x = -1;
